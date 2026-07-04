@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Application Security Testing from Vietnam | TMA Solutions</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; font-size: 15px; line-height: 1.7; }
+  .browser-wrap { max-width: 960px; margin: 24px auto; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,.14); }
+  .browser-bar { background: #1e293b; padding: 9px 16px; display: flex; align-items: center; gap: 12px; }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .browser-url { flex: 1; background: #334155; border-radius: 5px; padding: 4px 12px; font-size: 11.5px; color: #94a3b8; font-family: 'SF Mono','Consolas',monospace; }
+  .page { background: #fff; }
+  .sitenav { background: #fff; border-bottom: 1px solid #e8edf2; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .logo { font-size: 17px; font-weight: 700; color: #259dd9; letter-spacing: -.3px; }
+  .logo span { color: #1a2e44; }
+  .nav-links { display: flex; gap: 22px; }
+  .nav-links a { font-size: 12.5px; color: #555; text-decoration: none; font-weight: 500; }
+  .nav-cta { background: #259dd9; color: #fff !important; padding: 7px 16px; border-radius: 6px; font-size: 12px !important; font-weight: 600 !important; }
+  .breadcrumb { padding: 14px 40px; font-size: 11.5px; color: #94a3b8; border-bottom: 1px solid #f0f4f8; }
+  .breadcrumb a { color: #259dd9; text-decoration: none; }
+  .breadcrumb span { margin: 0 6px; }
+  .article-header { padding: 36px 40px 28px; }
+  .article-tags { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tag { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; padding: 3px 10px; border-radius: 20px; }
+  .tag-blue { background: #e0f0fb; color: #259dd9; }
+  .tag-gray { background: #f1f5f9; color: #64748b; }
+  .article-title { font-size: 28px; font-weight: 700; color: #1a2e44; line-height: 1.3; max-width: 720px; margin-bottom: 14px; }
+  .article-meta { font-size: 12px; color: #94a3b8; }
+  .article-meta strong { color: #64748b; }
+  .article-body { padding: 0 40px 40px; max-width: 760px; }
+  .article-body p { margin-bottom: 18px; color: #444; font-size: 15px; }
+  .article-body h2 { font-size: 20px; font-weight: 700; color: #1a2e44; margin: 36px 0 14px; padding-top: 8px; border-top: 2px solid #e8edf2; }
+
+  /* CTA 1 — Stats banner */
+  .cta-stats-banner { margin: 32px 0; background: linear-gradient(135deg, #1a2e44 0%, #0f1e2e 100%); border-radius: 12px; padding: 28px 32px; display: flex; align-items: center; gap: 32px; position: relative; overflow: hidden; }
+  .cta-stats-banner::before { content: ''; position: absolute; top: -30px; right: -30px; width: 180px; height: 180px; background: rgba(37,157,217,.12); border-radius: 50%; }
+  .stats-left { flex: 1; }
+  .stats-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #259dd9; margin-bottom: 8px; }
+  .stats-headline { font-size: 19px; font-weight: 700; color: #fff; line-height: 1.35; margin-bottom: 16px; }
+  .stats-headline em { color: #259dd9; font-style: normal; }
+  .stats-numbers { display: flex; gap: 28px; flex-wrap: wrap; }
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
+  .stat-lbl { font-size: 10px; color: #94a3b8; margin-top: 3px; white-space: nowrap; }
+  .stats-right { flex-shrink: 0; }
+  .btn-primary { display: inline-block; background: #259dd9; color: #fff; padding: 13px 24px; border-radius: 8px; font-size: 13.5px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+  .btn-sub { display: block; text-align: center; font-size: 10.5px; color: #64748b; margin-top: 7px; }
+
+  /* Content */
+  .check-list { list-style: none; margin: 12px 0 20px; }
+  .check-list li { padding: 6px 0 6px 24px; position: relative; font-size: 14.5px; color: #444; border-bottom: 1px solid #f0f4f8; }
+  .check-list li::before { content: '✓'; position: absolute; left: 0; color: #259dd9; font-weight: 700; }
+
+  /* CTA 2 — Case study cards */
+  .cta-casestudy-section { background: #f8fbfe; border: 1px solid #dbeafe; border-radius: 12px; padding: 28px 32px; margin: 32px 0; }
+  .cs-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #259dd9; margin-bottom: 6px; }
+  .cs-title { font-size: 17px; font-weight: 700; color: #1a2e44; margin-bottom: 4px; }
+  .cs-sub { font-size: 12.5px; color: #64748b; margin-bottom: 20px; }
+  .cs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cs-card { background: #fff; border: 1px solid #e2edf7; border-radius: 8px; padding: 16px 18px; text-decoration: none; display: block; }
+  .cs-card:hover { border-color: #259dd9; }
+  .cs-card-icon { font-size: 18px; margin-bottom: 8px; }
+  .cs-card-title { font-size: 13px; font-weight: 600; color: #1a2e44; line-height: 1.4; margin-bottom: 6px; }
+  .cs-card-tag { font-size: 10px; color: #259dd9; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* FAQ */
+  .faq-item { margin-bottom: 16px; }
+  .faq-q { font-weight: 600; color: #1a2e44; font-size: 14.5px; margin-bottom: 6px; }
+  .faq-a { font-size: 13.5px; color: #555; }
+
+  /* CTA 3 — FAQ box */
+  .cta-faq-box { background: #f8fbfe; border-left: 3px solid #259dd9; border-radius: 0 8px 8px 0; padding: 18px 20px; margin: 28px 0; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .cta-faq-q { font-size: 13px; color: #64748b; margin-bottom: 4px; }
+  .cta-faq-value { font-size: 14.5px; font-weight: 600; color: #1a2e44; }
+  .btn-secondary { display: inline-block; border: 1.5px solid #259dd9; color: #259dd9; padding: 9px 20px; border-radius: 7px; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+
+  /* CTA Main — End banner */
+  .cta-main-banner { background: #259dd9; border-radius: 12px; padding: 36px 40px; display: flex; align-items: center; justify-content: space-between; gap: 32px; margin: 36px 0 8px; position: relative; overflow: hidden; }
+  .cta-main-banner::after { content: ''; position: absolute; bottom: -40px; right: 60px; width: 160px; height: 160px; background: rgba(255,255,255,.07); border-radius: 50%; }
+  .cta-main-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: rgba(255,255,255,.7); margin-bottom: 8px; }
+  .cta-main-title { font-size: 22px; font-weight: 800; color: #fff; line-height: 1.3; margin-bottom: 10px; }
+  .cta-main-desc { font-size: 13.5px; color: rgba(255,255,255,.85); line-height: 1.5; }
+  .cta-main-left { flex: 1; }
+  .cta-main-right { flex-shrink: 0; text-align: center; }
+  .btn-white { display: inline-block; background: #fff; color: #259dd9; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+  .btn-white-sub { display: block; color: rgba(255,255,255,.75); font-size: 10.5px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="browser-wrap">
+  <div class="browser-bar">
+    <div class="dots">
+      <div class="dot" style="background:#ef4444"></div>
+      <div class="dot" style="background:#f59e0b"></div>
+      <div class="dot" style="background:#22c55e"></div>
+    </div>
+    <div class="browser-url">tmasolutions.com/insights/application-security-testing-from-vietnam</div>
+  </div>
+  <div class="page">
+    <nav class="sitenav">
+      <div class="logo">TMA <span>Solutions</span></div>
+      <div class="nav-links">
+        <a href="#">Services</a>
+        <a href="#">Industries</a>
+        <a href="#">Case Studies</a>
+        <a href="#">Insights</a>
+        <a href="#" class="nav-cta">Contact Us</a>
+      </div>
+    </nav>
+    <div class="breadcrumb">
+      <a href="#">Home</a><span>›</span><a href="#">Insights</a><span>›</span>Application Security Testing from Vietnam
+    </div>
+    <div class="article-header">
+      <div class="article-tags">
+        <span class="tag tag-blue">Security Testing</span>
+        <span class="tag tag-gray">Vietnam Outsourcing</span>
+      </div>
+      <h1 class="article-title">Application Security Testing from Vietnam: Why Global Enterprises Choose TMA Solutions</h1>
+      <div class="article-meta"><strong>TMA Editorial Team</strong> &nbsp;·&nbsp; July 2026 &nbsp;·&nbsp; 8 min read</div>
+    </div>
+    <div class="article-body">
+      <p>Your in-house security team is stretched thin. A Western pentest firm quotes 3× your budget. And finding a reliable security partner in Asia feels like a gamble. There's a better option.</p>
+      <p>Vietnam has quietly become one of the world's most competitive sources for application security testing — a dense pool of certified engineers, mature delivery processes, and a cost structure that makes enterprise-grade testing accessible. TMA Solutions has been at the center of this story for over 25 years.</p>
+
+      <h2>Why Choose Application Security Testing from Vietnam?</h2>
+      <ul class="check-list">
+        <li><strong>40–60% lower cost than US/EU</strong> — without sacrificing OWASP, PTES, or NIST compliance</li>
+        <li><strong>3,000+ certified engineers</strong> — OSCP, CEH, CISSP credentials, growing 18% YoY</li>
+        <li><strong>APAC + Europe timezone overlap</strong> — UTC+7 covers both business windows</li>
+        <li><strong>English-proficient teams</strong> — daily standups, written reports, stakeholder calls in English</li>
+      </ul>
+
+      <!-- CTA 1: Stats banner (1/3 bài) -->
+      <div class="cta-stats-banner">
+        <div class="stats-left">
+          <div class="stats-eyebrow">Why TMA Solutions</div>
+          <div class="stats-headline">Trusted by <em>Fortune-500</em> clients across 4 continents for application security testing</div>
+          <div class="stats-numbers">
+            <div class="stat-item"><div class="stat-num">25+</div><div class="stat-lbl">Years delivering</div></div>
+            <div class="stat-item"><div class="stat-num">500+</div><div class="stat-lbl">Security projects</div></div>
+            <div class="stat-item"><div class="stat-num">3,000+</div><div class="stat-lbl">Engineers</div></div>
+            <div class="stat-item"><div class="stat-num">40–60%</div><div class="stat-lbl">Cost vs US/EU</div></div>
+          </div>
+        </div>
+        <div class="stats-right">
+          <a href="https://www.tmasolutions.com/contact-us" class="btn-primary">Explore Our Services →</a>
+          <span class="btn-sub">No commitment required</span>
+        </div>
+      </div>
+
+      <h2>Application Security Testing Services We Offer</h2>
+      <p>TMA's security practice covers the full SDLC — from pre-release penetration testing to continuous runtime monitoring, aligned to OWASP Top 10, PTES, NIST SP 800-115, and GDPR.</p>
+
+      <h2>Our Application Security Testing Process</h2>
+      <p>Five phases: scoping & threat modeling → reconnaissance → exploitation → post-exploitation analysis → remediation reporting. Every engagement ends with a prioritized finding report and a live debrief with your engineering team.</p>
+
+      <h2>Security, Compliance &amp; Data Protection Standards</h2>
+      <p>TMA holds ISO 27001 certification and operates under strict NDA and data handling protocols. All testing is conducted within agreed-upon environments — full audit trail.</p>
+
+      <h2>Security Testing Projects Executed by TMA</h2>
+      <p>Four representative engagements from our security practice:</p>
+
+      <!-- CTA 2: Case study cards -->
+      <div class="cta-casestudy-section">
+        <div class="cs-eyebrow">Real Projects · Measurable Results</div>
+        <div class="cs-title">See How We've Done It</div>
+        <div class="cs-sub">Documented case studies — actual technical outcomes, no fluff.</div>
+        <div class="cs-grid">
+          <a href="https://www.tmasolutions.com/case-studies/penetration-testing-service" class="cs-card">
+            <div class="cs-card-icon">🔒</div>
+            <div class="cs-card-title">Penetration Testing Service</div>
+            <div class="cs-card-tag">View case study →</div>
+          </a>
+          <a href="https://www.tmasolutions.com/case-studies/security-testing-capability" class="cs-card">
+            <div class="cs-card-icon">🛡️</div>
+            <div class="cs-card-title">Security Testing Capability</div>
+            <div class="cs-card-tag">View case study →</div>
+          </a>
+          <a href="https://www.tmasolutions.com/case-studies/sast-ci-integration" class="cs-card">
+            <div class="cs-card-icon">⚙️</div>
+            <div class="cs-card-title">Embedding SAST into a Jenkins/Bitbucket Pipeline</div>
+            <div class="cs-card-tag">View case study →</div>
+          </a>
+          <a href="https://www.tmasolutions.com/case-studies/shift-left-runtime-security-with-invicti-dast" class="cs-card">
+            <div class="cs-card-icon">🎯</div>
+            <div class="cs-card-title">Shift-Left Runtime Security with Invicti DAST</div>
+            <div class="cs-card-tag">View case study →</div>
+          </a>
+        </div>
+      </div>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <div class="faq-q">How much does application security testing cost in Vietnam?</div>
+        <div class="faq-a">Typically 40–60% less than equivalent engagements in the US or EU. Most clients receive a fixed-price quote within 48 hours of the initial scoping call.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How long does an application security assessment take?</div>
+        <div class="faq-a">A standard web application penetration test runs 1–3 weeks. Larger engagements typically run 4–8 weeks. TMA can accommodate expedited timelines for pre-launch audits.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Do Vietnamese security testing providers comply with GDPR and ISO 27001?</div>
+        <div class="faq-a">TMA holds ISO 27001 certification and follows GDPR-compliant data handling protocols under signed NDA.</div>
+      </div>
+
+      <!-- CTA 3: FAQ box -->
+      <div class="cta-faq-box">
+        <div>
+          <div class="cta-faq-q">Still have questions specific to your stack or compliance requirements?</div>
+          <div class="cta-faq-value">Our security engineers answer questions like these daily — book a free 30-min call.</div>
+        </div>
+        <a href="https://www.tmasolutions.com/contact-us" class="btn-secondary">Book my free call →</a>
+      </div>
+
+      <!-- CTA Main: End-of-article conversion banner -->
+      <div class="cta-main-banner">
+        <div class="cta-main-left">
+          <div class="cta-main-label">Ready to get started?</div>
+          <div class="cta-main-title">Talk to Our Security Testing Experts</div>
+          <div class="cta-main-desc">Get a free 30-minute consultation with a TMA security engineer — scoped to your application, your compliance requirements, and your budget.</div>
+        </div>
+        <div class="cta-main-right">
+          <a href="https://www.tmasolutions.com/contact-us" class="btn-white">Start my free consultation →</a>
+          <span class="btn-white-sub">Free · No commitment · This week</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
