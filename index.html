@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TMA Solutions — Tool Tối Ưu CTA</title>
+  <style>
+    :root {
+      --primary:      #259dd9;
+      --primary-dark: #1a80b6;
+      --primary-bg:   #e8f5fc;
+      --white:        #ffffff;
+      --gray-bg:      #f5f7fa;
+      --gray-border:  #e2e8f0;
+      --text:         #333333;
+      --text-muted:   #64748b;
+      --text-light:   #94a3b8;
+      --success:      #22c55e;
+      --red:          #ef4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--primary);
+      color: var(--white);
+      padding: 0 32px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 12px rgba(37,157,217,.25);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-logo { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+    .header-sep  { width: 1px; height: 22px; background: rgba(255,255,255,.35); }
+    .header-sub  { font-size: 13px; opacity: .85; }
+    .header-pill {
+      margin-left: auto;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ── LAYOUT ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 20px;
+      padding: 24px 32px;
+      max-width: 1380px;
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--gray-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--gray-border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .card-head .icon { font-size: 16px; }
+    .card-body { padding: 20px; }
+
+    /* ── FORM ── */
+    .form-row { margin-bottom: 16px; }
+    .form-row:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 5px;
+      letter-spacing: .2px;
+    }
+    label .req { color: var(--primary); }
+    label .hint { font-weight: 400; color: var(--text-muted); font-size: 11px; }
+
+    textarea, select, input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--gray-border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--white);
+      font-family: inherit;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    textarea:focus, select:focus, input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,157,217,.12);
+    }
+    textarea { resize: vertical; min-height: 150px; line-height: 1.55; }
+
+    .api-box {
+      background: var(--gray-bg);
+      border: 1px solid var(--gray-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    .api-box label { color: var(--text-muted); }
+
+    /* ── BUTTON ── */
+    .btn-analyze {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background .15s, transform .1s;
+      letter-spacing: .2px;
+    }
+    .btn-analyze:hover:not(:disabled) { background: var(--primary-dark); }
+    .btn-analyze:active:not(:disabled) { transform: scale(.98); }
+    .btn-analyze:disabled { opacity: .55; cursor: not-allowed; }
+
+    .btn-demo {
+      padding: 7px 14px;
+      background: var(--white);
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .btn-demo:hover { background: var(--primary); color: var(--white); }
+    .btn-demo:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── EMPTY / LOADING ── */
+    .state-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+      gap: 10px;
+      text-align: center;
+    }
+    .state-empty .big-icon { font-size: 44px; opacity: .2; }
+    .state-empty .title { font-size: 15px; font-weight: 600; color: var(--text-light); }
+    .state-empty .sub   { font-size: 13px; color: var(--text-light); max-width: 260px; }
+
+    .state-loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 24px 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--gray-border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESULT ── */
+    .result-wrap { display: none; }
+
+    .rec-section {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--gray-border);
+    }
+    .rec-section:last-child { border-bottom: none; }
+
+    .rec-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* AIDA badge */
+    .aida-row { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+    .aida-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .aida-A1 { background: #dbeafe; color: #1d4ed8; }
+    .aida-I  { background: #dcfce7; color: #15803d; }
+    .aida-D  { background: #fef9c3; color: #a16207; }
+    .aida-A2 { background: #fce7f3; color: #be185d; }
+    .aida-note { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+    /* CTA cards */
+    .cta-card {
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 15px 16px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .cta-card.sec {
+      border: 1px solid var(--gray-border);
+      background: var(--gray-bg);
+    }
+    .cta-pill {
+      position: absolute;
+      top: -10px; left: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 10px;
+      letter-spacing: .3px;
+    }
+    .cta-pill.main { background: var(--primary); color: var(--white); }
+    .cta-pill.alt  { background: var(--text-muted); color: var(--white); }
+
+    .cta-type  { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 5px; }
+    .cta-card.sec .cta-type { color: var(--text); }
+    .cta-meta  { font-size: 12px; color: var(--text-muted); margin-bottom: 7px; display: flex; align-items: center; gap: 4px; }
+    .cta-copy  {
+      background: var(--primary-bg);
+      border-left: 3px solid var(--primary);
+      padding: 7px 11px;
+      border-radius: 0 6px 6px 0;
+      font-size: 13px;
+      font-style: italic;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .cta-card.sec .cta-copy { background: var(--white); border-color: var(--gray-border); }
+    .cta-reason { font-size: 12px; color: var(--text-muted); line-height: 1.45; }
+
+    .pos-row { display: flex; gap: 5px; flex-wrap: wrap; margin: 7px 0; }
+    .pos-tag {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .tips-list { list-style: none; }
+    .tips-list li {
+      padding: 5px 0;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 7px;
+      line-height: 1.45;
+    }
+    .tips-list li::before { content: '→'; color: var(--primary); flex-shrink: 0; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--gray-border);
+      gap: 4px;
+    }
+    .tab-btn {
+      padding: 11px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      transition: all .15s;
+      margin-bottom: -1px;
+    }
+    .tab-btn.on { color: var(--primary); border-bottom-color: var(--primary); }
+
+    .tab-panel { padding: 18px 20px; }
+    .tab-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
+    }
+    .tab-panel-desc { font-size: 12px; color: var(--text-muted); }
+
+    /* ── DEMO RENDER ── */
+    .demo-blank {
+      background: var(--gray-bg);
+      border-radius: 8px;
+      padding: 28px;
+      text-align: center;
+      color: var(--text-light);
+      font-size: 13px;
+      border: 1px dashed var(--gray-border);
+    }
+
+    .browser-frame {
+      border: 1px solid var(--gray-border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,.06);
+    }
+    .browser-bar {
+      background: #1e293b;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .browser-url {
+      margin-left: 10px;
+      font-size: 11px;
+      color: #94a3b8;
+      background: #334155;
+      padding: 2px 10px;
+      border-radius: 4px;
+    }
+    .browser-body {
+      background: var(--white);
+      overflow-y: auto;
+      max-height: 620px;
+    }
+
+    .error-msg {
+      padding: 12px 16px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: var(--red);
+      font-size: 13px;
+    }
+
+    /* ── DIVIDER ── */
+    .form-divider {
+      height: 1px;
+      background: var(--gray-border);
+      margin: 16px 0;
+    }
+
+    /* responsive */
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <span class="header-logo">TMA Solutions</span>
+  <span class="header-sep"></span>
+  <span class="header-sub">Tool Tối Ưu CTA · tmasolutions.com/insights</span>
+  <span class="header-pill">Beta v1.0</span>
+</header>
+
+<div class="layout">
+
+  <!-- ══════════════════════════════════════
+       LEFT — INPUT PANEL
+  ══════════════════════════════════════ -->
+  <div>
+    <div class="card">
+      <div class="card-head">
+        <span class="icon">✏️</span>
+        <span>Thông tin bài viết</span>
+      </div>
+      <div class="card-body">
+
+        <!-- API Key -->
+        <div class="api-box">
+          <div class="form-row" style="margin-bottom:0">
+            <label for="apiKey">
+              Claude API Key <span class="req">*</span>
+              <span class="hint"> — lưu trong phiên, không gửi đi nơi khác</span>
+            </label>
+            <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off" />
+          </div>
+        </div>
+
+        <!-- Dàn ý -->
+        <div class="form-row">
+          <label for="outline">
+            Dàn ý bài viết <span class="req">*</span>
+          </label>
+          <textarea id="outline" placeholder="Dán dàn ý vào đây. Ví dụ:&#10;&#10;Tiêu đề: Top AI Solutions for Healthcare Vietnam&#10;&#10;I. Tổng quan thị trường AI Healthcare tại VN&#10;II. Các ứng dụng AI trong chẩn đoán và điều trị&#10;III. Telehealth và remote patient monitoring&#10;IV. Case study: TMA Solutions cho bệnh viện ABC&#10;V. Hướng triển khai và những bước tiếp theo"></textarea>
+        </div>
+
+        <!-- Từ khóa -->
+        <div class="form-row">
+          <label for="keyword">
+            Từ khóa chính
+            <span class="hint"> — giúp xác định AIDA chính xác hơn</span>
+          </label>
+          <input type="text" id="keyword" placeholder="Ví dụ: AI solutions for healthcare Vietnam" />
+        </div>
+
+        <div class="form-divider"></div>
+
+        <!-- Giai đoạn AIDA -->
+        <div class="form-row">
+          <label for="aidaStage">Giai đoạn AIDA <span class="req">*</span></label>
+          <select id="aidaStage">
+            <option value="">— Chọn giai đoạn —</option>
+            <option value="A1">A1 — Nhận thức · Chưa biết TMA, đang tìm kiến thức chung</option>
+            <option value="I">I — Quan tâm · Đang so sánh nhà cung cấp giải pháp</option>
+            <option value="D">D — Mong muốn · Đã biết TMA, đang tìm bằng chứng thực tế</option>
+            <option value="A2">A2 — Hành động · Đã quyết định, cần điểm chạm cuối</option>
+          </select>
+        </div>
+
+        <!-- Persona -->
+        <div class="form-row">
+          <label for="persona">Tệp khách hàng mục tiêu <span class="req">*</span></label>
+          <select id="persona">
+            <option value="">— Chọn persona —</option>
+            <option value="foreign">🌐 Doanh nghiệp nước ngoài · Outsourcing tại VN</option>
+            <option value="healthcare">🏥 Doanh nghiệp Healthcare · AI / Telehealth / Clinical</option>
+            <option value="manufacturing">🏭 Doanh nghiệp Manufacturing · IoT / Predictive Maintenance</option>
+            <option value="fintech">💳 Doanh nghiệp Fintech / E-commerce · CDP / Social Commerce</option>
+            <option value="custom">🤖 Doanh nghiệp cần Custom Software / AI Development</option>
+          </select>
+        </div>
+
+        <!-- Mục tiêu CTA -->
+        <div class="form-row">
+          <label for="ctaGoal">Mục tiêu CTA ưu tiên</label>
+          <select id="ctaGoal">
+            <option value="auto">✦ Tự động theo giai đoạn AIDA (khuyến nghị)</option>
+            <optgroup label="Nhóm 1 — Tạo KH tiềm năng (A1 / I)">
+              <option value="lead_download">Kêu gọi tải xuống tài liệu</option>
+              <option value="lead_newsletter">Đăng ký nhận bản tin</option>
+              <option value="lead_event">Đăng ký sự kiện / hội thảo</option>
+              <option value="lead_readmore">Tìm hiểu & Đọc thêm</option>
+            </optgroup>
+            <optgroup label="Nhóm 2 — Củng cố thông tin (D)">
+              <option value="reinforce_product">Giới thiệu sản phẩm / dịch vụ TMA</option>
+              <option value="reinforce_brand">Giới thiệu thương hiệu TMA</option>
+            </optgroup>
+            <optgroup label="Nhóm 3 — Kích thích hành động (A2)">
+              <option value="convert_consult">Nhận tư vấn / Liên hệ</option>
+              <option value="convert_promo">Chương trình ưu đãi</option>
+              <option value="convert_buy">Hướng dẫn mua hàng</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Analyze button -->
+        <button class="btn-analyze" id="analyzeBtn" onclick="runAnalysis()">
+          <span>✦</span>
+          Phân tích &amp; Đề xuất CTA
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       RIGHT — OUTPUT PANEL
+  ══════════════════════════════════════ -->
+  <div>
+    <div class="card" id="outputCard">
+
+      <!-- Empty state -->
+      <div class="state-empty" id="stateEmpty">
+        <div class="big-icon">✦</div>
+        <div class="title">Chưa có kết quả</div>
+        <div class="sub">Điền thông tin bài viết bên trái và nhấn "Phân tích & Đề xuất CTA"</div>
+      </div>
+
+      <!-- Loading state -->
+      <div class="state-loading" id="stateLoading" style="display:none">
+        <div class="spinner"></div>
+        <span id="loadingMsg">Đang phân tích nội dung...</span>
+      </div>
+
+      <!-- Result state -->
+      <div class="result-wrap" id="stateResult">
+
+        <!-- AIDA + note -->
+        <div class="rec-section">
+          <div class="rec-title">Giai đoạn AIDA xác định</div>
+          <div class="aida-row">
+            <div id="aidaBadge"></div>
+            <div id="aidaNote" class="aida-note"></div>
+          </div>
+        </div>
+
+        <!-- Primary CTA -->
+        <div class="rec-section">
+          <div class="rec-title">Đề xuất CTA</div>
+          <div id="primaryCTAWrap"></div>
+          <div id="secondaryCTAWrap"></div>
+        </div>
+
+        <!-- Tips -->
+        <div class="rec-section" id="tipsWrap" style="display:none">
+          <div class="rec-title">Lưu ý tối ưu</div>
+          <ul class="tips-list" id="tipsList"></ul>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn on" id="tabMockup" onclick="switchTab('mockup')">📐 Mockup CTA</button>
+          <button class="tab-btn"    id="tabArticle" onclick="switchTab('article')">📄 Bài viết hoàn chỉnh</button>
+        </div>
+
+        <!-- Tab: Mockup -->
+        <div class="tab-panel" id="panelMockup">
+          <div class="tab-panel-head">
+            <span class="tab-panel-desc">Preview CTA trong bố cục blog tmasolutions.com/insights</span>
+            <button class="btn-demo" id="btnMockup" onclick="genMockup()">Tạo mockup →</button>
+          </div>
+          <div id="mockupOut">
+            <div class="demo-blank">Nhấn "Tạo mockup" để xem preview CTA trực quan</div>
+          </div>
+        </div>
+
+        <!-- Tab: Full article -->
+        <div class="tab-panel" id="panelArticle" style="display:none">
+          <div class="tab-panel-head">
+            <span class="tab-panel-desc">Bài viết hoàn chỉnh từ dàn ý, CTA đã chèn đúng vị trí</span>
+            <button class="btn-demo" id="btnArticle" onclick="genArticle()">Tạo bài viết →</button>
+          </div>
+          <div id="articleOut">
+            <div class="demo-blank">Nhấn "Tạo bài viết" để xem bài hoàn chỉnh với CTA đã chèn</div>
+          </div>
+        </div>
+
+      </div><!-- /result-wrap -->
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════ -->
+<script>
+/* ── STATE ── */
+let analysis = null;
+
+/* ── PERSONA LABELS ── */
+const PERSONAS = {
+  foreign:       'Doanh nghiệp nước ngoài (tìm outsourcing tại VN)',
+  healthcare:    'Doanh nghiệp Healthcare (AI / Telehealth / Clinical)',
+  manufacturing: 'Doanh nghiệp Manufacturing (IoT / Predictive Maintenance)',
+  fintech:       'Doanh nghiệp Fintech / E-commerce (CDP / Social Commerce)',
+  custom:        'Doanh nghiệp cần Custom Software / AI Development'
+};
+
+const GOAL_LABELS = {
+  auto:              'Tu dong theo AIDA',
+  lead_download:     'Thu lead — Keu goi tai xuong tai lieu',
+  lead_newsletter:   'Thu lead — Dang ky nhan ban tin',
+  lead_event:        'Thu lead — Dang ky su kien / hoi thao',
+  lead_readmore:     'Giu nguoi doc — Tim hieu & Doc them',
+  reinforce_product: 'Cung co — Gioi thieu san pham / dich vu TMA',
+  reinforce_brand:   'Cung co — Gioi thieu thuong hieu TMA',
+  convert_consult:   'Chuyen doi — Nhan tu van / Lien he',
+  convert_promo:     'Chuyen doi — Chuong trinh uu dai',
+  convert_buy:       'Chuyen doi — Huong dan mua hang'
+};
+
+/* ══════════════════════════════════════
+   SYSTEM PROMPT — CTA KNOWLEDGE BASE
+══════════════════════════════════════ */
+function sysPromptAnalysis() {
+  return `Ban la chuyen gia toi uu CTA (Call-to-Action) cho blog B2B cong nghe, chuyen ve TMA Solutions — cong ty outsourcing va custom software tai Viet Nam. Blog tai tmasolutions.com/insights.
+
+KHUNG PHAN LOAI CTA THEO AIDA:
+
+NHOM 1 — CTA Tao khach hang tiem nang (dung cho A1 + I):
+- CTA Keu goi tai xuong: dien form -> nhan tai lieu qua email. Dinh dang: Box vien + icon, Button cuoi bai.
+- CTA Dang ky nhan ban tin: thu email/SDT. Dinh dang: Form nho, Popup giua bai (1/3).
+- CTA Su kien/Hoi thao: dang ky tham gia su kien TMA. Dinh dang: Form dien + link landing page.
+- CTA Tim hieu & Doc them: dieu huong sang bai lien quan. Dinh dang: Anchor text, Box bai viet lien quan.
+
+NHOM 2 — CTA Cung co thong tin (dung cho D):
+- CTA Gioi thieu san pham: khai thac noi dau + gioi thieu tinh nang SP. Dinh dang: Banner giua bai.
+- CTA Gioi thieu thuong hieu: nhan manh uy tin TMA. Dinh dang: Banner, link danh muc SP.
+
+NHOM 3 — CTA Kich thich mua hang (dung cho A2):
+- CTA Nhan tu van: dieu huong sang form/hotline. Dinh dang: Button lon, Banner ngang.
+- CTA Chuong trinh uu dai: banner uu dai giat tit.
+- CTA Huong dan mua hang: dan den link mua. Dinh dang: Button/GIF.
+
+VI TRI DAT CTA:
+- Man hinh dau tien (above fold): Tai xuong, khuyen mai
+- Giua bai 1/3: Banner insight, san pham/uu dai
+- Cuoi bai: Moi loai CTA
+
+CONG THUC CTA HIEU QUA:
+- Mo hinh 3S: Simple (1 hanh dong) + Specific (noi trung noi dau KH) + Strong (tinh tu manh: ngay hom nay, mien phi)
+- Mo hinh Hook -> Value -> CTA: cau hoi/noi dau -> loi ich cu the do duoc -> CTA dong tu manh
+- Nang cap: Anchor text -> Button (tang CR 2-3 lan), Button -> Banner (khi muon giat tit)
+- Hieu ung tam ly: FOMO (so bo lo), Social proof, Khan hiem (chi con X suat), Mat mat (se mat gi neu khong hanh dong)
+
+QUY TAC NHAN BIET AIDA TU KHOA:
+- A1: tu khoa khai niem chung, khong brand, chua muon mua (la gi, nhu the nao, tai sao)
+- I: co top/company/provider/from vietnam/leading, dang so sanh nha cung cap
+- D: co ten brand/SP, tim review/case study/gia/co tot khong
+- A2: co mua/dang ky/thue/lien he/bao gia + ten SP/brand
+
+BOI CANH TMA SOLUTIONS:
+- Doi tuong: B2B doanh nghiep nuoc ngoai va trong nuoc
+- Nganh: Healthcare, Manufacturing, Fintech/E-commerce, Custom Software/AI
+- Gio thieu: outsourcing, custom software development, AI solutions, software testing, IoT
+- Bo mau: Primary #259dd9, White #ffffff, Background #f5f7fa, Text #333333
+
+TRA VE JSON HOP LE (khong markdown, khong code block, chi JSON thuan):
+{
+  "aida_stage": "A1",
+  "aida_note": "ly do ngan gon tai sao bai nay thuoc giai doan nay (1-2 cau)",
+  "primary_cta": {
+    "type": "ten loai CTA chinh xac tu danh sach tren",
+    "format": "dinh dang khuyen nghi",
+    "positions": ["vi tri 1", "vi tri 2"],
+    "copy": "goi y text CTA cu the, hap dan, phu hop nganh (tieng Viet hoac tieng Anh tuy dan y)",
+    "reason": "ly do chon loai CTA nay (2-3 cau)"
+  },
+  "secondary_ctas": [
+    {
+      "type": "ten loai CTA",
+      "format": "dinh dang",
+      "positions": ["vi tri"],
+      "copy": "text goi y",
+      "reason": "ly do ngan"
+    }
+  ],
+  "optimization_tips": ["tip 1", "tip 2", "tip 3"]
+}`;
+}
+
+/* ══════════════════════════════════════
+   STEP 1 — ANALYZE
+══════════════════════════════════════ */
+async function runAnalysis() {
+  const apiKey   = v('apiKey');
+  const outline  = v('outline');
+  const stage    = v('aidaStage');
+  const persona  = v('persona');
+  const keyword  = v('keyword');
+  const goal     = v('ctaGoal');
+
+  if (!apiKey)  return alert('Vui long nhap Claude API Key');
+  if (!outline) return alert('Vui long nhap dan y bai viet');
+  if (!stage)   return alert('Vui long chon giai doan AIDA');
+  if (!persona) return alert('Vui long chon tep khach hang muc tieu');
+
+  setLoading(true, 'Dang phan tich noi dung va de xuat CTA...');
+
+  const userMsg = `Phan tich bai blog TMA Solutions va de xuat CTA toi uu.
+
+THONG TIN:
+- Giai doan AIDA nguoi dung chon: ${stage}
+- Tu khoa chinh: ${keyword || 'Khong cung cap'}
+- Tep khach hang: ${PERSONAS[persona]}
+- Muc tieu CTA uu tien: ${GOAL_LABELS[goal] || goal}
+
+DAN Y BAI VIET:
+${outline}
+
+Xac nhan hoac dieu chinh giai doan AIDA neu can, sau do de xuat CTA phu hop nhat. Tra ve JSON thuan.`;
+
+  try {
+    const raw  = await callClaude(apiKey, sysPromptAnalysis(), userMsg, 1200);
+    const data = parseJSON(raw);
+    analysis   = { ...data, apiKey, outline, persona, keyword, stage };
+    renderResult(data);
+  } catch (e) {
+    setLoading(false);
+    showError('stateEmpty', 'Loi: ' + e.message);
+  }
+}
+
+/* ══════════════════════════════════════
+   STEP 2a — MOCKUP
+══════════════════════════════════════ */
+async function genMockup() {
+  if (!analysis) return;
+  const out = document.getElementById('mockupOut');
+  out.innerHTML = '<div class="state-loading"><div class="spinner"></div><span>Dang tao mockup CTA...</span></div>';
+  document.getElementById('btnMockup').disabled = true;
+
+  const sys = `Ban la frontend developer tao mockup blog B2B. Tao mot section HTML preview cua trang blog TMA Solutions.
+
+YEU CAU:
+- Mau thuong hieu: Primary #259dd9, White #ffffff, Background #f5f7fa, Text #333333
+- Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
+- Tao preview bao gom: breadcrumb gia, tieu de bai, 2-3 doan noi dung placeholder, va cac CTA component theo dung de xuat
+- CTA phai duoc styled dep, dung mau thuong hieu TMA, gong cac blog B2B chuyen nghiep
+- Bao gom ca CTA chinh va CTA phu tai dung vi tri (1/3 bai va cuoi bai)
+- Ket qua trong giao dien blog that, chuyen nghiep
+- Tra ve HTML hoan chinh trong the <div class="blog-preview">...</div>, bao gom <style> tag inline
+- Khong dung external CSS/JS framework. Khong co the html/body/head`;
+
+  const usr = `Tao blog section mockup voi:
+
+Tieu de bai (lay tu dong dau cua dan y): ${analysis.outline.split('\n').find(l => l.trim()) || 'TMA Solutions Blog'}
+Giai doan AIDA: ${analysis.aida_stage}
+
+CTA CHINH:
+- Loai: ${analysis.primary_cta.type}
+- Dinh dang: ${analysis.primary_cta.format}
+- Vi tri: ${analysis.primary_cta.positions.join(', ')}
+- Copy: "${analysis.primary_cta.copy}"
+
+CTA PHU:
+${(analysis.secondary_ctas || []).map(c => `- ${c.type} tai ${(c.positions||[]).join('/')}: "${c.copy}"`).join('\n')}
+
+Tao preview section dai khoang 650px, trong that, chuyen nghiep, dung phong cach B2B tech blog.`;
+
+  try {
+    const html = await callClaude(analysis.apiKey, sys, usr, 2500);
+    out.innerHTML = renderBrowser('tmasolutions.com/insights/article', html, 680);
+  } catch (e) {
+    out.innerHTML = `<div class="error-msg">Loi tao mockup: ${e.message}</div>`;
+  } finally {
+    document.getElementById('btnMockup').disabled = false;
+  }
+}
+
+/* ══════════════════════════════════════
+   STEP 2b — FULL ARTICLE
+══════════════════════════════════════ */
+async function genArticle() {
+  if (!analysis) return;
+  const out = document.getElementById('articleOut');
+  out.innerHTML = '<div class="state-loading"><div class="spinner"></div><span>Dang viet bai hoan chinh voi CTA...</span></div>';
+  document.getElementById('btnArticle').disabled = true;
+
+  const sys = `Ban la content writer B2B chuyen viet blog cho TMA Solutions — cong ty outsourcing/custom software tai Viet Nam. Blog tai tmasolutions.com/insights.
+
+YEU CAU BAI VIET:
+- Chuyen nghiep, B2B tone, khong qua marketing
+- Moi section 120-180 tu
+- Chen CTA tai dung vi tri (1/3 bai va cuoi bai), phu hop voi noi dung xung quanh
+- CTA phai co styling dep voi mau TMA Solutions (#259dd9)
+- Viet bang tieng Anh neu dan y tieng Anh, tieng Viet neu dan y tieng Viet
+- Tra ve HTML hoan chinh bao gom <style> tag inline
+- Mau: #259dd9 (primary), #ffffff, #f5f7fa, #333333
+- Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
+- Khong co the html/body/head`;
+
+  const usr = `Viet bai blog hoan chinh dua tren dan y, chen CTA tai vi tri dung.
+
+PERSONA: ${PERSONAS[analysis.persona]}
+GIAI DOAN AIDA: ${analysis.aida_stage}
+
+DAN Y:
+${analysis.outline}
+
+CTA CHINH can chen:
+- Loai: ${analysis.primary_cta.type}
+- Vi tri: ${analysis.primary_cta.positions.join(', ')}
+- Copy: "${analysis.primary_cta.copy}"
+- Dinh dang: ${analysis.primary_cta.format}
+
+CTA PHU:
+${(analysis.secondary_ctas || []).map(c => `- ${c.type} tai ${(c.positions||[]).join('/')}: "${c.copy}"`).join('\n')}
+
+Viet bai day du, chen CTA vao dung vi tri, styled dep voi mau TMA Solutions.`;
+
+  try {
+    const html = await callClaude(analysis.apiKey, sys, usr, 4000);
+    out.innerHTML = renderBrowser('tmasolutions.com/insights/article — Full Preview', html, 700);
+  } catch (e) {
+    out.innerHTML = `<div class="error-msg">Loi tao bai viet: ${e.message}</div>`;
+  } finally {
+    document.getElementById('btnArticle').disabled = false;
+  }
+}
+
+/* ══════════════════════════════════════
+   RENDER RESULT
+══════════════════════════════════════ */
+function renderResult(data) {
+  setLoading(false);
+  document.getElementById('stateEmpty').style.display  = 'none';
+  document.getElementById('stateResult').style.display = 'block';
+
+  /* AIDA badge */
+  const BADGE = { A1:'aida-A1', I:'aida-I', D:'aida-D', A2:'aida-A2' };
+  const LABEL = { A1:'A1 — Nhan thuc', I:'I — Quan tam', D:'D — Mong muon', A2:'A2 — Hanh dong' };
+  document.getElementById('aidaBadge').innerHTML =
+    `<span class="aida-badge ${BADGE[data.aida_stage]}">${LABEL[data.aida_stage]}</span>`;
+  document.getElementById('aidaNote').textContent = data.aida_note || '';
+
+  /* Primary CTA */
+  document.getElementById('primaryCTAWrap').innerHTML = ctaCard(data.primary_cta, true);
+
+  /* Secondary CTAs */
+  document.getElementById('secondaryCTAWrap').innerHTML =
+    (data.secondary_ctas || []).map(c => ctaCard(c, false)).join('');
+
+  /* Tips */
+  const tips = data.optimization_tips || [];
+  if (tips.length) {
+    document.getElementById('tipsWrap').style.display = 'block';
+    document.getElementById('tipsList').innerHTML = tips.map(t => `<li>${t}</li>`).join('');
+  }
+
+  /* Reset demo areas */
+  document.getElementById('mockupOut').innerHTML  =
+    '<div class="demo-blank">Nhan "Tao mockup" de xem preview CTA truc quan</div>';
+  document.getElementById('articleOut').innerHTML =
+    '<div class="demo-blank">Nhan "Tao bai viet" de xem bai hoan chinh voi CTA da chen</div>';
+  switchTab('mockup');
+}
+
+function ctaCard(cta, isPrimary) {
+  return `
+    <div class="cta-card ${isPrimary ? '' : 'sec'}">
+      <span class="cta-pill ${isPrimary ? 'main' : 'alt'}">${isPrimary ? 'CTA Chinh' : 'CTA Phu'}</span>
+      <div class="cta-type">${cta.type}</div>
+      <div class="cta-meta">📐 ${cta.format}</div>
+      <div class="cta-copy">"${cta.copy}"</div>
+      <div class="pos-row">${(cta.positions||[]).map(p=>`<span class="pos-tag">📍 ${p}</span>`).join('')}</div>
+      <div class="cta-reason">${cta.reason}</div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════
+   RENDER BROWSER FRAME
+══════════════════════════════════════ */
+function renderBrowser(url, html, maxH) {
+  return `
+    <div class="browser-frame">
+      <div class="browser-bar">
+        <div class="dot" style="background:#ef4444"></div>
+        <div class="dot" style="background:#f59e0b"></div>
+        <div class="dot" style="background:#22c55e"></div>
+        <span class="browser-url">${url}</span>
+      </div>
+      <div class="browser-body" style="max-height:${maxH}px; padding:36px 44px">
+        ${html}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════
+   CLAUDE API
+══════════════════════════════════════ */
+async function callClaude(apiKey, system, user, maxTokens) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: maxTokens,
+      system: system,
+      messages: [{ role: 'user', content: user }]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'HTTP ' + res.status);
+  }
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+function v(id) { return document.getElementById(id).value.trim(); }
+
+function parseJSON(text) {
+  const clean = text.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/\s*```$/,'').trim();
+  return JSON.parse(clean);
+}
+
+function setLoading(on, msg) {
+  document.getElementById('stateEmpty').style.display   = on ? 'none' : 'flex';
+  document.getElementById('stateLoading').style.display = on ? 'flex' : 'none';
+  document.getElementById('stateResult').style.display  = 'none';
+  if (msg) document.getElementById('loadingMsg').textContent = msg;
+  document.getElementById('analyzeBtn').disabled = on;
+}
+
+function showError(fallbackId, msg) {
+  document.getElementById(fallbackId).style.display = 'flex';
+  alert(msg);
+}
+
+function switchTab(tab) {
+  document.getElementById('tabMockup').classList.toggle('on',  tab === 'mockup');
+  document.getElementById('tabArticle').classList.toggle('on', tab === 'article');
+  document.getElementById('panelMockup').style.display  = tab === 'mockup'  ? 'block' : 'none';
+  document.getElementById('panelArticle').style.display = tab === 'article' ? 'block' : 'none';
+}
+</script>
+
+</body>
+</html>
