@@ -655,6 +655,8 @@ TRA VE JSON HOP LE — CAC QUY TAC BAT BUOC:
 1. Chi JSON thuan, khong markdown, khong code block.
 2. Toan bo JSON phai nam tren 1 dong duy nhat — tuyet doi khong dung raw newline (ky tu xuong dong that) ben trong bat ky gia tri chuoi nao. Neu can xuong dong trong noi dung, viet \n (2 ky tu backslash + n).
 3. Tat ca gia tri chuoi phai duoc escape dung (dac biet: dau ngoac kep ben trong chuoi phai la \", dau gach cheo la \\).
+4. Tuyet doi khong de dau phay thua sau phan tu cuoi cung cua object hoac array (trailing comma). Vi du SAI: {"a":1,} — Vi du DUNG: {"a":1}.
+5. Moi gia tri chuoi phai bat dau va ket thuc bang dau ngoac kep, khong dung ngoac don.
 
 {
   "aida_stage": "A1",
@@ -937,7 +939,18 @@ function parseJSON(text) {
 
 function repairJSON(text) {
   let s = text.trim();
-  // Walk string tracking open/close braces outside quoted strings
+
+  // 1. Remove markdown fences if any remained
+  s = s.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/\s*```$/,'').trim();
+
+  // 2. Try parse as-is first
+  try { return JSON.parse(s); } catch(_) {}
+
+  // 3. Fix trailing comma before } or ] (common model mistake)
+  s = s.replace(/,\s*([}\]])/g, '$1');
+  try { return JSON.parse(s); } catch(_) {}
+
+  // 4. Walk and track open structures, close truncated JSON
   const stack = [];
   let inStr = false;
   let i = 0;
@@ -948,17 +961,18 @@ function repairJSON(text) {
     if (!inStr) {
       if      (c === '{') stack.push('}');
       else if (c === '[') stack.push(']');
-      else if (c === '}' || c === ']') stack.pop();
+      else if ((c === '}' || c === ']') && stack.length) stack.pop();
     }
     i++;
   }
-  // Close any unclosed string
-  if (inStr) s += '"';
-  // Remove trailing comma before closing
-  s = s.replace(/,\s*$/, '');
-  // Close all unclosed structures
-  while (stack.length) s += stack.pop();
-  return JSON.parse(s);
+  if (inStr) s += '"';                         // close unclosed string
+  s = s.replace(/,\s*$/, '');                  // remove trailing comma
+  while (stack.length) s += stack.pop();       // close open braces
+
+  // 5. Final attempt
+  try { return JSON.parse(s); } catch(e) {
+    throw new Error('Khong the sua JSON: ' + e.message);
+  }
 }
 
 function setLoading(on, msg) {
