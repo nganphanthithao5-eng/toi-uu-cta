@@ -295,6 +295,59 @@
     }
     .tips-list li::before { content: '→'; color: var(--primary); flex-shrink: 0; }
 
+    /* ── RELATED ARTICLES ── */
+    .related-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+    .related-card {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      background: #f8fbfe;
+      transition: border-color .2s;
+    }
+    .related-card:hover { border-color: var(--primary); }
+    .related-card a {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+      line-height: 1.4;
+    }
+    .related-card a:hover { text-decoration: underline; }
+    .related-why {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+    .related-tags {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .related-tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      background: #e0f0fb;
+      color: var(--primary);
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .related-empty {
+      font-size: 12px;
+      color: #94a3b8;
+      padding: 10px 0;
+      font-style: italic;
+    }
+
     /* ── TABS ── */
     .tabs {
       display: flex;
@@ -540,6 +593,13 @@
           <ul class="tips-list" id="tipsList"></ul>
         </div>
 
+        <!-- Related articles (only shown for read-more CTA) -->
+        <div class="rec-section" id="relatedArticlesWrap" style="display:none">
+          <div class="rec-title">📖 Bài viết liên quan để đọc thêm</div>
+          <div class="related-note" id="relatedNote"></div>
+          <div id="relatedList"></div>
+        </div>
+
         <!-- Tabs -->
         <div class="tabs">
           <button class="tab-btn on" id="tabMockup" onclick="switchTab('mockup')">📐 Mockup CTA</button>
@@ -580,6 +640,13 @@
 <script>
 /* ── STATE ── */
 let analysis = null;
+let articlesDB = [];
+
+// Load articles database at startup
+fetch('./articles-database.json')
+  .then(r => r.json())
+  .then(d => { articlesDB = d; })
+  .catch(() => { articlesDB = []; });
 
 /* ── PERSONA LABELS ── */
 const PERSONAS = {
@@ -855,6 +922,10 @@ function renderResult(data) {
     document.getElementById('tipsList').innerHTML = tips.map(t => `<li>${t}</li>`).join('');
   }
 
+  /* Related articles (for read-more CTA) */
+  const outline = analysis?.outline || document.getElementById('outline').value.trim();
+  renderRelatedArticles(data, outline);
+
   /* Reset demo areas */
   document.getElementById('mockupOut').innerHTML  =
     '<div class="demo-blank">Nhan "Tao mockup" de xem preview CTA truc quan</div>';
@@ -873,6 +944,114 @@ function ctaCard(cta, isPrimary) {
       <div class="pos-row">${(cta.positions||[]).map(p=>`<span class="pos-tag">📍 ${p}</span>`).join('')}</div>
       <div class="cta-reason">${cta.reason}</div>
     </div>`;
+}
+
+/* ══════════════════════════════════════
+   RELATED ARTICLES (for read-more CTA)
+══════════════════════════════════════ */
+
+// CTA types that trigger article suggestions
+const READ_MORE_KEYWORDS = [
+  'doc them', 'tim hieu', 'read more', 'internal', 'bai lien quan',
+  'dieu huong', 'kham pha', 'xem them', 'case study', 'ho so nang luc',
+  'noi dung lien quan', 'lead_readmore', 'lead_casestudy'
+];
+
+function isReadMoreCTA(data) {
+  const haystack = [
+    data?.primary_cta?.type || '',
+    data?.primary_cta?.cta_type || '',
+    data?.primary_cta?.format || '',
+    data?.primary_cta?.reason || ''
+  ].join(' ').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return READ_MORE_KEYWORDS.some(kw => haystack.includes(kw));
+}
+
+function tokenize(text) {
+  return (text || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')  // strip diacritics
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 3);
+}
+
+function scoreArticle(article, queryTokens) {
+  const titleTokens  = tokenize(article.title);
+  const tagStr       = (article.topic_tags  || []).join(' ');
+  const slugStr      = (article.slug_keywords || []).join(' ');
+  const tagTokens    = tokenize(tagStr + ' ' + slugStr);
+  let score = 0;
+  const matchedTags  = [];
+  const matchedWords = [];
+
+  for (const q of queryTokens) {
+    const inTitle = titleTokens.some(t => t.includes(q) || q.includes(t));
+    const inTags  = tagTokens.some(t  => t.includes(q) || q.includes(t));
+    if (inTitle) { score += 3; matchedWords.push(q); }
+    if (inTags)  { score += 2; }
+  }
+  // Bonus: tag match (exact)
+  for (const tag of (article.topic_tags || [])) {
+    const tagLow = tokenize(tag);
+    if (tagLow.some(t => queryTokens.includes(t))) {
+      matchedTags.push(tag);
+      score += 2;
+    }
+  }
+  return { score, matchedTags: [...new Set(matchedTags)], matchedWords: [...new Set(matchedWords)] };
+}
+
+function findRelatedArticles(outline) {
+  if (!articlesDB.length) return { articles: [], noDb: true };
+  const tokens = tokenize(outline);
+  const scored = articlesDB.map(a => {
+    const { score, matchedTags, matchedWords } = scoreArticle(a, tokens);
+    return { ...a, score, matchedTags, matchedWords };
+  }).filter(a => a.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+  return { articles: scored, noDb: false };
+}
+
+function renderRelatedArticles(data, outline) {
+  const wrap = document.getElementById('relatedArticlesWrap');
+  const list = document.getElementById('relatedList');
+  const note = document.getElementById('relatedNote');
+
+  if (!isReadMoreCTA(data)) {
+    wrap.style.display = 'none';
+    return;
+  }
+
+  wrap.style.display = 'block';
+  const { articles, noDb } = findRelatedArticles(outline);
+
+  if (noDb) {
+    note.textContent = '';
+    list.innerHTML = '<div class="related-empty">Không tải được cơ sở dữ liệu bài viết. Hãy kiểm tra file articles-database.json.</div>';
+    return;
+  }
+
+  if (!articles.length) {
+    note.textContent = '';
+    list.innerHTML = '<div class="related-empty">Chưa tìm thấy bài viết liên quan phù hợp trên Insights — cân nhắc dùng loại CTA khác hoặc cập nhật lại articles-database.json.</div>';
+    return;
+  }
+
+  note.textContent = `Tìm thấy ${articles.length} bài viết phù hợp từ tmasolutions.com/insights để gợi ý đọc thêm:`;
+  list.innerHTML = articles.map(a => {
+    const whyParts = [];
+    if (a.matchedTags.length) whyParts.push(`Chủ đề khớp: ${a.matchedTags.join(', ')}`);
+    if (a.matchedWords.length) whyParts.push(`Từ khóa liên quan: ${a.matchedWords.slice(0,4).join(', ')}`);
+    const why = whyParts.join(' · ') || 'Nội dung tương đồng với bài đang tối ưu';
+    const tags = (a.topic_tags || []).map(t => `<span class="related-tag">${t}</span>`).join('');
+    return `
+      <div class="related-card">
+        <a href="${a.url}" target="_blank" rel="noopener">${a.title}</a>
+        ${tags ? `<div class="related-tags">${tags}</div>` : ''}
+        <div class="related-why">↳ ${why}</div>
+      </div>`;
+  }).join('');
 }
 
 /* ══════════════════════════════════════
