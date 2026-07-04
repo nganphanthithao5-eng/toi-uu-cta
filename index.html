@@ -471,19 +471,17 @@
           <select id="ctaGoal">
             <option value="auto">✦ Tự động theo giai đoạn AIDA (khuyến nghị)</option>
             <optgroup label="Nhóm 1 — Tạo KH tiềm năng (A1 / I)">
-              <option value="lead_download">Kêu gọi tải xuống tài liệu</option>
-              <option value="lead_newsletter">Đăng ký nhận bản tin</option>
-              <option value="lead_event">Đăng ký sự kiện / hội thảo</option>
-              <option value="lead_readmore">Tìm hiểu & Đọc thêm</option>
+              <option value="lead_event">Đăng ký sự kiện / hội thảo TMA</option>
+              <option value="lead_readmore">Tìm hiểu & Đọc thêm (internal link)</option>
+              <option value="lead_casestudy">Xem Case Study / Hồ sơ năng lực</option>
             </optgroup>
             <optgroup label="Nhóm 2 — Củng cố thông tin (D)">
-              <option value="reinforce_product">Giới thiệu sản phẩm / dịch vụ TMA</option>
+              <option value="reinforce_product">Giới thiệu dịch vụ / giải pháp TMA</option>
               <option value="reinforce_brand">Giới thiệu thương hiệu TMA</option>
             </optgroup>
-            <optgroup label="Nhóm 3 — Kích thích hành động (A2)">
-              <option value="convert_consult">Nhận tư vấn / Liên hệ</option>
-              <option value="convert_promo">Chương trình ưu đãi</option>
-              <option value="convert_buy">Hướng dẫn mua hàng</option>
+            <optgroup label="Nhóm 3 — Chuyển đổi (I / D / A2)">
+              <option value="convert_contact">Điền form liên hệ tmasolutions.com/contact-us</option>
+              <option value="convert_event">Đăng ký tư vấn / demo dự án</option>
             </optgroup>
           </select>
         </div>
@@ -594,15 +592,13 @@ const PERSONAS = {
 
 const GOAL_LABELS = {
   auto:              'Tu dong theo AIDA',
-  lead_download:     'Thu lead — Keu goi tai xuong tai lieu',
-  lead_newsletter:   'Thu lead — Dang ky nhan ban tin',
-  lead_event:        'Thu lead — Dang ky su kien / hoi thao',
-  lead_readmore:     'Giu nguoi doc — Tim hieu & Doc them',
-  reinforce_product: 'Cung co — Gioi thieu san pham / dich vu TMA',
+  lead_event:        'Thu lead — Dang ky su kien / hoi thao TMA',
+  lead_readmore:     'Giu nguoi doc — Tim hieu & Doc them (internal link)',
+  lead_casestudy:    'Giu nguoi doc — Xem Case Study / Ho so nang luc',
+  reinforce_product: 'Cung co — Gioi thieu dich vu / giai phap TMA',
   reinforce_brand:   'Cung co — Gioi thieu thuong hieu TMA',
-  convert_consult:   'Chuyen doi — Nhan tu van / Lien he',
-  convert_promo:     'Chuyen doi — Chuong trinh uu dai',
-  convert_buy:       'Chuyen doi — Huong dan mua hang'
+  convert_contact:   'Chuyen doi — Dien form lien he tmasolutions.com/contact-us',
+  convert_event:     'Chuyen doi — Dang ky tu van / demo du an'
 };
 
 /* ══════════════════════════════════════
@@ -613,20 +609,27 @@ function sysPromptAnalysis() {
 
 KHUNG PHAN LOAI CTA THEO AIDA:
 
-NHOM 1 — CTA Tao khach hang tiem nang (dung cho A1 + I):
-- CTA Keu goi tai xuong: dien form -> nhan tai lieu qua email. Dinh dang: Box vien + icon, Button cuoi bai.
-- CTA Dang ky nhan ban tin: thu email/SDT. Dinh dang: Form nho, Popup giua bai (1/3).
-- CTA Su kien/Hoi thao: dang ky tham gia su kien TMA. Dinh dang: Form dien + link landing page.
-- CTA Tim hieu & Doc them: dieu huong sang bai lien quan. Dinh dang: Anchor text, Box bai viet lien quan.
+QUY TAC TUYET DOI CHO TMA SOLUTIONS:
+- KHONG DUOC de xuat CTA keu goi tai xuong tai lieu (download lead magnet).
+- KHONG DUOC de xuat CTA dang ky nhan ban tin / newsletter.
+- CTA chuyen doi cuoi cung LUON LUON phai la form lien he tai: https://www.tmasolutions.com/contact-us
+  Copy mau: "Get in touch with TMA Solutions" hoac "Lien he voi doi ngu TMA" — Button/Banner dan thang den link nay.
 
-NHOM 2 — CTA Cung co thong tin (dung cho D):
-- CTA Gioi thieu san pham: khai thac noi dau + gioi thieu tinh nang SP. Dinh dang: Banner giua bai.
-- CTA Gioi thieu thuong hieu: nhan manh uy tin TMA. Dinh dang: Banner, link danh muc SP.
+CAC LOAI CTA DUOC PHEP DUNG:
 
-NHOM 3 — CTA Kich thich mua hang (dung cho A2):
-- CTA Nhan tu van: dieu huong sang form/hotline. Dinh dang: Button lon, Banner ngang.
-- CTA Chuong trinh uu dai: banner uu dai giat tit.
-- CTA Huong dan mua hang: dan den link mua. Dinh dang: Button/GIF.
+NHOM 1 — Dieu huong & Giu nguoi doc (A1 + I):
+- CTA Xem Case Study / Ho so nang luc: Banner/Box dan sang trang case study TMA. Dinh dang: Banner giua bai.
+- CTA Tim hieu & Doc them: Internal link sang bai lien quan, bai cuoi pheu. Dinh dang: Anchor text, Box bai viet.
+- CTA Su kien / Hoi thao: Dang ky tham du webinar/event cua TMA. Dinh dang: Form + link landing page.
+
+NHOM 2 — Cung co niem tin (D):
+- CTA Gioi thieu dich vu TMA: Khai thac noi dau + gioi thieu giai phap TMA giai quyet duoc. Dinh dang: Banner giua bai.
+- CTA Gioi thieu thuong hieu TMA: Nhan manh uy tin, kinh nghiem, so luong du an. Dinh dang: Banner, link trang About/Portfolio.
+
+NHOM 3 — Chuyen doi (I + D + A2) — CTA quan trong nhat:
+- CTA Dien form lien he: LUON CO mat o cuoi bai va co the them 1/3 bai. Link: https://www.tmasolutions.com/contact-us
+  Copy mau: "Let's discuss your project", "Talk to our experts", "Get a free consultation".
+  Dinh dang: Button lon mau #259dd9, Banner ngang cuoi bai.
 
 VI TRI DAT CTA:
 - Man hinh dau tien (above fold): Tai xuong, khuyen mai
