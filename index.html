@@ -412,6 +412,10 @@
       padding: 2px 10px;
       border-radius: 4px;
     }
+    .browser-iframe {
+      background: var(--white);
+      display: block;
+    }
     .browser-body {
       background: var(--white);
       overflow-y: auto;
@@ -804,15 +808,20 @@ async function genMockup() {
 
   const sys = `Ban la frontend developer tao mockup blog B2B. Tao mot section HTML preview cua trang blog TMA Solutions.
 
-YEU CAU:
+YEU CAU DINH DANG — TUYET DOI PHAI TUAN THU:
+- Chi tra ve ma HTML thuan tuy. KHONG co markdown code fence (khong co \`\`\`html o dau, khong co \`\`\` o cuoi).
+- KHONG co bat ky giai thich, chu thich, hay van ban nao ngoai HTML.
+- KHONG co the <html>, <head>, <body> — chi noi dung ben trong body.
+- Bat buoc co <style> tag inline o dau ket qua.
+
+NOI DUNG MOCKUP:
 - Mau thuong hieu: Primary #259dd9, White #ffffff, Background #f5f7fa, Text #333333
 - Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
 - Tao preview bao gom: breadcrumb gia, tieu de bai, 2-3 doan noi dung placeholder, va cac CTA component theo dung de xuat
-- CTA phai duoc styled dep, dung mau thuong hieu TMA, gong cac blog B2B chuyen nghiep
+- CTA phai duoc styled dep, dung mau thuong hieu TMA, giong cac blog B2B chuyen nghiep
 - Bao gom ca CTA chinh va CTA phu tai dung vi tri (1/3 bai va cuoi bai)
 - Ket qua trong giao dien blog that, chuyen nghiep
-- Tra ve HTML hoan chinh trong the <div class="blog-preview">...</div>, bao gom <style> tag inline
-- Khong dung external CSS/JS framework. Khong co the html/body/head`;
+- Khong dung external CSS/JS framework`;
 
   const usr = `Tao blog section mockup voi:
 
@@ -832,10 +841,12 @@ Tao preview section dai khoang 650px, trong that, chuyen nghiep, dung phong cach
 
   try {
     const html = await callClaude(analysis.apiKey, sys, usr, 2500);
-    out.innerHTML = renderBrowser('tmasolutions.com/insights/article', html, 680);
+    renderBrowser(out, 'tmasolutions.com/insights/article', html, 680);
   } catch (e) {
-    out.innerHTML = '<div class="demo-blank">Phan hoi bi loi, vui long thu lai.</div>';
-    showError('stateEmpty', 'Loi tao mockup: ' + e.message);
+    out.innerHTML = `<div class="demo-blank">Phan hoi bi loi, vui long thu lai.
+      <button onclick="genMockup()" style="margin-left:10px;padding:4px 12px;background:#259dd9;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Thu lai</button>
+    </div>`;
+    showError('stateResult', 'Loi tao mockup: ' + e.message);
   } finally {
     document.getElementById('btnMockup').disabled = false;
   }
@@ -852,16 +863,21 @@ async function genArticle() {
 
   const sys = `Ban la content writer B2B chuyen viet blog cho TMA Solutions — cong ty outsourcing/custom software tai Viet Nam. Blog tai tmasolutions.com/insights.
 
+YEU CAU DINH DANG — TUYET DOI PHAI TUAN THU:
+- Chi tra ve ma HTML thuan tuy. KHONG co markdown code fence (khong co \`\`\`html o dau, khong co \`\`\` o cuoi).
+- KHONG co bat ky giai thich, chu thich, hay van ban nao ngoai HTML.
+- KHONG co the <html>, <head>, <body> — chi noi dung ben trong body.
+- Bat buoc co <style> tag inline o dau ket qua.
+
 YEU CAU BAI VIET:
 - Chuyen nghiep, B2B tone, khong qua marketing
 - Moi section 120-180 tu
 - Chen CTA tai dung vi tri (1/3 bai va cuoi bai), phu hop voi noi dung xung quanh
 - CTA phai co styling dep voi mau TMA Solutions (#259dd9)
 - Viet bang tieng Anh neu dan y tieng Anh, tieng Viet neu dan y tieng Viet
-- Tra ve HTML hoan chinh bao gom <style> tag inline
 - Mau: #259dd9 (primary), #ffffff, #f5f7fa, #333333
 - Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
-- Khong co the html/body/head`;
+- Khong dung external CSS/JS framework`;
 
   const usr = `Viet bai blog hoan chinh dua tren dan y, chen CTA tai vi tri dung.
 
@@ -884,10 +900,12 @@ Viet bai day du, chen CTA vao dung vi tri, styled dep voi mau TMA Solutions.`;
 
   try {
     const html = await callClaude(analysis.apiKey, sys, usr, 4000);
-    out.innerHTML = renderBrowser('tmasolutions.com/insights/article — Full Preview', html, 700);
+    renderBrowser(out, 'tmasolutions.com/insights/article — Full Preview', html, 700);
   } catch (e) {
-    out.innerHTML = '<div class="demo-blank">Phan hoi bi loi, vui long thu lai.</div>';
-    showError('stateEmpty', 'Loi tao bai viet: ' + e.message);
+    out.innerHTML = `<div class="demo-blank">Phan hoi bi loi, vui long thu lai.
+      <button onclick="genArticle()" style="margin-left:10px;padding:4px 12px;background:#259dd9;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Thu lai</button>
+    </div>`;
+    showError('stateResult', 'Loi tao bai viet: ' + e.message);
   } finally {
     document.getElementById('btnArticle').disabled = false;
   }
@@ -1057,8 +1075,23 @@ function renderRelatedArticles(data, outline) {
 /* ══════════════════════════════════════
    RENDER BROWSER FRAME
 ══════════════════════════════════════ */
-function renderBrowser(url, html, maxH) {
-  return `
+function stripFences(raw) {
+  return raw.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/g, '').trim();
+}
+
+function renderBrowser(containerEl, url, rawHtml, iframeH) {
+  const cleanHtml = stripFences(rawHtml);
+  if (!cleanHtml) {
+    containerEl.innerHTML = `
+      <div class="demo-blank">
+        Khong the tao ban xem truoc (phan hoi rong).
+        <button onclick="genMockup()" style="margin-left:10px;padding:4px 12px;background:#259dd9;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Thu lai</button>
+      </div>`;
+    return;
+  }
+
+  // Build the frame shell
+  containerEl.innerHTML = `
     <div class="browser-frame">
       <div class="browser-bar">
         <div class="dot" style="background:#ef4444"></div>
@@ -1066,10 +1099,14 @@ function renderBrowser(url, html, maxH) {
         <div class="dot" style="background:#22c55e"></div>
         <span class="browser-url">${url}</span>
       </div>
-      <div class="browser-body" style="max-height:${maxH}px; padding:36px 44px">
-        ${html}
-      </div>
+      <iframe id="previewFrame_${Date.now()}" class="browser-iframe"
+              style="width:100%;height:${iframeH}px;border:none;display:block;"
+              sandbox="allow-same-origin"></iframe>
     </div>`;
+
+  // Set srcdoc as property (no escaping needed)
+  const iframe = containerEl.querySelector('iframe');
+  iframe.srcdoc = cleanHtml;
 }
 
 /* ══════════════════════════════════════
