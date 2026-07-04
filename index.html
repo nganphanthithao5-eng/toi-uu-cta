@@ -903,7 +903,7 @@ async function callClaude(apiKey, system, user, maxTokens) {
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: maxTokens,
       system: system,
       messages: [{ role: 'user', content: user }]
@@ -924,17 +924,37 @@ async function callClaude(apiKey, system, user, maxTokens) {
 function v(id) { return document.getElementById(id).value.trim(); }
 
 function parseJSON(text) {
-  const clean = text.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/\s*```$/,'').trim();
-  try {
-    return JSON.parse(clean);
-  } catch (e1) {
-    // Attempt to repair truncated JSON
-    try {
-      return repairJSON(clean);
-    } catch (e2) {
-      throw new Error('Phan hoi bi loi dinh dang (JSON). Chi tiet: ' + e1.message);
+  // 1. Strip markdown fences
+  let clean = text.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/\s*```$/,'').trim();
+  // 2. Sanitize: replace raw newlines inside string values with \n
+  clean = sanitizeJSON(clean);
+  // 3. Try direct parse
+  try { return JSON.parse(clean); } catch (e1) {
+    // 4. Try repair
+    try { return repairJSON(clean); } catch (e2) {
+      throw new Error('Phan hoi bi loi dinh dang. Vui long thu lai.');
     }
   }
+}
+
+// Walk char-by-char, replace raw newlines inside strings with \\n
+function sanitizeJSON(text) {
+  let out = '';
+  let inStr = false;
+  let i = 0;
+  while (i < text.length) {
+    const c = text[i];
+    // Escaped char inside string — keep as-is
+    if (c === '\\' && inStr) { out += c + (text[i+1]||''); i += 2; continue; }
+    // Toggle string mode on unescaped quote
+    if (c === '"') { inStr = !inStr; out += c; i++; continue; }
+    // Raw newline inside string → escape it
+    if (inStr && c === '\n') { out += '\\n'; i++; continue; }
+    // Raw carriage return inside string → drop
+    if (inStr && c === '\r') { i++; continue; }
+    out += c; i++;
+  }
+  return out;
 }
 
 function repairJSON(text) {
@@ -984,23 +1004,30 @@ function setLoading(on, msg) {
 }
 
 function showError(fallbackId, msg) {
-  // Hide loading, show empty state as fallback
   document.getElementById('stateLoading').style.display = 'none';
-  document.getElementById(fallbackId).style.display = 'flex';
-  document.getElementById('analyzeBtn').disabled = false;
-  // Show inline error banner instead of alert
-  let banner = document.getElementById('errorBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'errorBanner';
-    banner.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#fff;border:1.5px solid #fca5a5;border-radius:10px;padding:14px 18px;box-shadow:0 4px 20px rgba(0,0,0,.12);display:flex;align-items:center;gap:12px;font-size:13px;color:#b91c1c;max-width:400px;z-index:999';
-    banner.innerHTML = '<span id="errorText"></span><button onclick="this.parentElement.remove()" style="margin-left:8px;padding:5px 12px;background:#259dd9;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Thu lai</button>';
-    document.body.appendChild(banner);
+  document.getElementById('stateResult').style.display  = 'none';
+  document.getElementById(fallbackId).style.display     = 'flex';
+  document.getElementById('analyzeBtn').disabled        = false;
+
+  // Inline error box bên dưới button — không dùng alert()
+  let box = document.getElementById('inlineError');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'inlineError';
+    box.style.cssText = 'margin-top:12px;padding:12px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:13px;color:#b91c1c;display:flex;align-items:flex-start;gap:8px;line-height:1.45';
+    const btn = document.createElement('button');
+    btn.textContent = 'X';
+    btn.style.cssText = 'margin-left:auto;background:none;border:none;color:#b91c1c;font-size:14px;cursor:pointer;flex-shrink:0;padding:0';
+    btn.onclick = () => box.style.display = 'none';
+    box.appendChild(btn);
+    // Insert after analyze button
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    analyzeBtn.parentNode.insertBefore(box, analyzeBtn.nextSibling);
   }
-  document.getElementById('errorText').textContent = msg;
-  banner.style.display = 'flex';
-  // Auto-hide after 8 seconds
-  setTimeout(() => { if (banner) banner.style.display = 'none'; }, 8000);
+  // Set message (insert before the X button)
+  box.childNodes[0].textContent = msg;
+  box.style.display = 'flex';
+  setTimeout(() => { box.style.display = 'none'; }, 10000);
 }
 
 function switchTab(tab) {
