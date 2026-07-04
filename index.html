@@ -651,7 +651,11 @@ BOI CANH TMA SOLUTIONS:
 - Gio thieu: outsourcing, custom software development, AI solutions, software testing, IoT
 - Bo mau: Primary #259dd9, White #ffffff, Background #f5f7fa, Text #333333
 
-TRA VE JSON HOP LE (khong markdown, khong code block, chi JSON thuan):
+TRA VE JSON HOP LE — CAC QUY TAC BAT BUOC:
+1. Chi JSON thuan, khong markdown, khong code block.
+2. Toan bo JSON phai nam tren 1 dong duy nhat — tuyet doi khong dung raw newline (ky tu xuong dong that) ben trong bat ky gia tri chuoi nao. Neu can xuong dong trong noi dung, viet \n (2 ky tu backslash + n).
+3. Tat ca gia tri chuoi phai duoc escape dung (dac biet: dau ngoac kep ben trong chuoi phai la \", dau gach cheo la \\).
+
 {
   "aida_stage": "A1",
   "aida_note": "ly do ngan gon tai sao bai nay thuoc giai doan nay (1-2 cau)",
@@ -707,7 +711,7 @@ ${outline}
 Xac nhan hoac dieu chinh giai doan AIDA neu can, sau do de xuat CTA phu hop nhat. Tra ve JSON thuan.`;
 
   try {
-    const raw  = await callClaude(apiKey, sysPromptAnalysis(), userMsg, 1200);
+    const raw  = await callClaude(apiKey, sysPromptAnalysis(), userMsg, 2500);
     const data = parseJSON(raw);
     analysis   = { ...data, apiKey, outline, persona, keyword, stage };
     renderResult(data);
@@ -758,7 +762,8 @@ Tao preview section dai khoang 650px, trong that, chuyen nghiep, dung phong cach
     const html = await callClaude(analysis.apiKey, sys, usr, 2500);
     out.innerHTML = renderBrowser('tmasolutions.com/insights/article', html, 680);
   } catch (e) {
-    out.innerHTML = `<div class="error-msg">Loi tao mockup: ${e.message}</div>`;
+    out.innerHTML = '<div class="demo-blank">Phan hoi bi loi, vui long thu lai.</div>';
+    showError('stateEmpty', 'Loi tao mockup: ' + e.message);
   } finally {
     document.getElementById('btnMockup').disabled = false;
   }
@@ -809,7 +814,8 @@ Viet bai day du, chen CTA vao dung vi tri, styled dep voi mau TMA Solutions.`;
     const html = await callClaude(analysis.apiKey, sys, usr, 4000);
     out.innerHTML = renderBrowser('tmasolutions.com/insights/article — Full Preview', html, 700);
   } catch (e) {
-    out.innerHTML = `<div class="error-msg">Loi tao bai viet: ${e.message}</div>`;
+    out.innerHTML = '<div class="demo-blank">Phan hoi bi loi, vui long thu lai.</div>';
+    showError('stateEmpty', 'Loi tao bai viet: ' + e.message);
   } finally {
     document.getElementById('btnArticle').disabled = false;
   }
@@ -917,7 +923,42 @@ function v(id) { return document.getElementById(id).value.trim(); }
 
 function parseJSON(text) {
   const clean = text.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/\s*```$/,'').trim();
-  return JSON.parse(clean);
+  try {
+    return JSON.parse(clean);
+  } catch (e1) {
+    // Attempt to repair truncated JSON
+    try {
+      return repairJSON(clean);
+    } catch (e2) {
+      throw new Error('Phan hoi bi loi dinh dang (JSON). Chi tiet: ' + e1.message);
+    }
+  }
+}
+
+function repairJSON(text) {
+  let s = text.trim();
+  // Walk string tracking open/close braces outside quoted strings
+  const stack = [];
+  let inStr = false;
+  let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (c === '\\' && inStr) { i += 2; continue; }
+    if (c === '"')            { inStr = !inStr; i++; continue; }
+    if (!inStr) {
+      if      (c === '{') stack.push('}');
+      else if (c === '[') stack.push(']');
+      else if (c === '}' || c === ']') stack.pop();
+    }
+    i++;
+  }
+  // Close any unclosed string
+  if (inStr) s += '"';
+  // Remove trailing comma before closing
+  s = s.replace(/,\s*$/, '');
+  // Close all unclosed structures
+  while (stack.length) s += stack.pop();
+  return JSON.parse(s);
 }
 
 function setLoading(on, msg) {
@@ -929,8 +970,23 @@ function setLoading(on, msg) {
 }
 
 function showError(fallbackId, msg) {
+  // Hide loading, show empty state as fallback
+  document.getElementById('stateLoading').style.display = 'none';
   document.getElementById(fallbackId).style.display = 'flex';
-  alert(msg);
+  document.getElementById('analyzeBtn').disabled = false;
+  // Show inline error banner instead of alert
+  let banner = document.getElementById('errorBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'errorBanner';
+    banner.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#fff;border:1.5px solid #fca5a5;border-radius:10px;padding:14px 18px;box-shadow:0 4px 20px rgba(0,0,0,.12);display:flex;align-items:center;gap:12px;font-size:13px;color:#b91c1c;max-width:400px;z-index:999';
+    banner.innerHTML = '<span id="errorText"></span><button onclick="this.parentElement.remove()" style="margin-left:8px;padding:5px 12px;background:#259dd9;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Thu lai</button>';
+    document.body.appendChild(banner);
+  }
+  document.getElementById('errorText').textContent = msg;
+  banner.style.display = 'flex';
+  // Auto-hide after 8 seconds
+  setTimeout(() => { if (banner) banner.style.display = 'none'; }, 8000);
 }
 
 function switchTab(tab) {
