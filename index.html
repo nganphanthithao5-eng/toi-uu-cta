@@ -442,6 +442,141 @@
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
     }
+
+    /* ── HISTORY BUTTON & DRAWER ── */
+    .btn-history {
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.32);
+      color: var(--white);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s;
+    }
+    .btn-history:hover { background: rgba(255,255,255,.26); }
+    .history-count {
+      background: var(--white);
+      color: var(--primary-dark);
+      border-radius: 10px;
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 1px 6px;
+      min-width: 16px;
+      text-align: center;
+    }
+
+    .history-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .4);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s;
+    }
+    .history-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .history-drawer {
+      position: fixed;
+      top: 0; right: 0;
+      width: 380px;
+      max-width: 92vw;
+      height: 100%;
+      background: var(--white);
+      box-shadow: -8px 0 30px rgba(0,0,0,.18);
+      z-index: 201;
+      transform: translateX(100%);
+      transition: transform .2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .history-drawer.open { transform: translateX(0); }
+
+    .history-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--gray-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .history-head h3 { font-size: 15px; font-weight: 700; }
+    .history-head-actions { display: flex; align-items: center; gap: 10px; }
+    .history-clear {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .history-clear:hover { color: var(--red); }
+    .history-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 2px 4px;
+    }
+    .history-close:hover { color: var(--text); }
+
+    .history-list { flex: 1; overflow-y: auto; padding: 10px 14px; }
+
+    .history-empty {
+      padding: 50px 20px;
+      text-align: center;
+      color: var(--text-light);
+      font-size: 13px;
+    }
+
+    .history-item {
+      border: 1px solid var(--gray-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      position: relative;
+    }
+    .history-item:hover { border-color: var(--primary); background: var(--primary-bg); }
+    .history-item-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .history-item-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .history-item-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .history-item-del {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .history-item-del:hover { color: var(--red); }
   </style>
 </head>
 <body>
@@ -451,8 +586,24 @@
   <span class="header-logo">TMA Solutions</span>
   <span class="header-sep"></span>
   <span class="header-sub">Tool Tối Ưu CTA · tmasolutions.com/insights</span>
+  <button class="btn-history" id="btnHistory" onclick="openHistoryPanel()">
+    🕘 Lịch sử <span class="history-count" id="historyCount">0</span>
+  </button>
   <span class="header-pill">Beta v1.0</span>
 </header>
+
+<!-- HISTORY DRAWER -->
+<div class="history-overlay" id="historyOverlay" onclick="closeHistoryPanel()"></div>
+<aside class="history-drawer" id="historyDrawer">
+  <div class="history-head">
+    <h3>🕘 Lịch sử phân tích</h3>
+    <div class="history-head-actions">
+      <button class="history-clear" id="btnClearHistory" onclick="clearHistory()">Xoá tất cả</button>
+      <button class="history-close" onclick="closeHistoryPanel()">✕</button>
+    </div>
+  </div>
+  <div class="history-list" id="historyList"></div>
+</aside>
 
 <div class="layout">
 
@@ -652,6 +803,122 @@ fetch('./articles-database.json')
   .then(d => { articlesDB = d; })
   .catch(() => { articlesDB = []; });
 
+// Restore history count badge on load
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('historyCount').textContent = loadHistory().length;
+});
+
+/* ══════════════════════════════════════
+   HISTORY (luu vao localStorage trinh duyet)
+   Khong luu apiKey — chi luu dan y/input + ket qua phan tich.
+══════════════════════════════════════ */
+const HISTORY_KEY = 'tma_cta_history_v1';
+const HISTORY_MAX = 30;
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveHistory(list) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.warn('Khong the luu lich su (co the day localStorage):', e.message);
+  }
+}
+
+function addToHistory(entry) {
+  const list = loadHistory();
+  list.unshift(entry);
+  while (list.length > HISTORY_MAX) list.pop();
+  saveHistory(list);
+  renderHistoryPanel();
+}
+
+function deleteHistoryEntry(id, evt) {
+  if (evt) evt.stopPropagation();
+  const list = loadHistory().filter(h => h.id !== id);
+  saveHistory(list);
+  renderHistoryPanel();
+}
+
+function clearHistory() {
+  if (!loadHistory().length) return;
+  if (!confirm('Xoá toàn bộ lịch sử phân tích đã lưu trên trình duyệt này?')) return;
+  saveHistory([]);
+  renderHistoryPanel();
+}
+
+function openHistoryPanel() {
+  renderHistoryPanel();
+  document.getElementById('historyDrawer').classList.add('open');
+  document.getElementById('historyOverlay').classList.add('open');
+}
+
+function closeHistoryPanel() {
+  document.getElementById('historyDrawer').classList.remove('open');
+  document.getElementById('historyOverlay').classList.remove('open');
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmtHistoryDate(iso) {
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function renderHistoryPanel() {
+  const list = loadHistory();
+  document.getElementById('historyCount').textContent = list.length;
+
+  const wrap = document.getElementById('historyList');
+  if (!list.length) {
+    wrap.innerHTML = '<div class="history-empty">Chưa có lần phân tích nào được lưu.<br>Kết quả sẽ tự động lưu ở đây sau khi bạn bấm "Phân tích &amp; Đề xuất CTA".</div>';
+    return;
+  }
+
+  wrap.innerHTML = list.map(h => {
+    const title = escapeHtml((h.outline.split('\n').find(l => l.trim()) || 'Không có tiêu đề').slice(0, 70));
+    const keyword = escapeHtml(h.keyword || '');
+    const stageLabel = { A1:'A1', I:'I', D:'D', A2:'A2' }[h.data.aida_stage] || h.data.aida_stage || '?';
+    return `
+      <div class="history-item" onclick="restoreFromHistory('${h.id}')">
+        <div class="history-item-top">
+          <span class="aida-badge aida-${h.data.aida_stage || ''}" style="font-size:10px;padding:2px 8px">${stageLabel}</span>
+          <span class="history-item-title">${title}</span>
+          <button class="history-item-del" title="Xoá" onclick="deleteHistoryEntry('${h.id}', event)">✕</button>
+        </div>
+        <div class="history-item-meta">
+          <span>🕘 ${fmtHistoryDate(h.ts)}</span>
+          <span>${keyword ? '🔑 ' + keyword : ''}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function restoreFromHistory(id) {
+  const entry = loadHistory().find(h => h.id === id);
+  if (!entry) return;
+
+  document.getElementById('outline').value   = entry.outline;
+  document.getElementById('keyword').value   = entry.keyword || '';
+  document.getElementById('aidaStage').value = entry.stage   || '';
+  document.getElementById('persona').value   = entry.persona || '';
+  document.getElementById('ctaGoal').value   = entry.goal    || 'auto';
+
+  analysis = { ...entry.data, apiKey: v('apiKey'), outline: entry.outline, persona: entry.persona, keyword: entry.keyword, stage: entry.stage };
+  renderResult(entry.data);
+  closeHistoryPanel();
+}
+
 /* ── PERSONA LABELS ── */
 const PERSONAS = {
   foreign:       'Doanh nghiệp nước ngoài (tìm outsourcing tại VN)',
@@ -791,6 +1058,12 @@ Xac nhan hoac dieu chinh giai doan AIDA neu can, sau do de xuat CTA phu hop nhat
     const data = parseJSON(raw);
     analysis   = { ...data, apiKey, outline, persona, keyword, stage };
     renderResult(data);
+    addToHistory({
+      id: 'h' + Date.now() + Math.random().toString(36).slice(2, 7),
+      ts: new Date().toISOString(),
+      outline, keyword, persona, stage, goal,
+      data
+    });
   } catch (e) {
     setLoading(false);
     showError('stateEmpty', 'Loi: ' + e.message);
