@@ -29,21 +29,42 @@ File: [`agent-cta.md`](./agent-cta.md)
 
 **Input**: link bài viết (agent tự fetch bằng WebFetch) hoặc nội dung/dàn ý dán trực tiếp.
 
+## Agent đã xây: `agent-cta-design`
+
+File: [`agent-cta-design.md`](./agent-cta-design.md)
+
+**Nhiệm vụ**: Đề xuất và thiết kế **hình thức hiển thị** CTA (button, banner, popup/exit-intent, sticky bar, inline text-link) + dựng mockup trực quan — không viết nội dung câu CTA (đó là việc của `agent-cta`).
+
+**Skill sử dụng** (tại `.claude/skills/`):
+- `cta-optimization-skill` — dùng để xác định giai đoạn AIDA, persona, vị trí đặt CTA trong bài
+- `cta-mockup-design-standards` — chuẩn thiết kế trực quan: màu sắc/kích thước/khoảng trống theo CRO, chống thiết kế rập khuôn ("AI slop"), kỹ thuật render mockup (iframe/srcdoc, strip code fence)
+
+**Quy trình agent chạy khi nhận 1 câu CTA hoặc 1 bài viết cần chèn CTA**:
+1. Xác định giai đoạn AIDA + persona mục tiêu
+2. Đề xuất hình thức hiển thị phù hợp theo giai đoạn AIDA + vị trí đặt (đầu/giữa/cuối/thoát trang) — có bảng mapping button/banner/popup/sticky bar/inline text-link ngay trong agent
+3. Dựng mockup (HTML/CSS hoặc mô tả layout): vị trí, màu sắc (bám bộ nhận diện TMA), kích thước, text
+4. Giải thích lý do chọn hình thức đó dựa trên hiệu ứng tâm lý thuyết phục + mục tiêu kinh doanh
+
+**Tools riêng**: có thêm `Write` (lưu file mockup) và `Artifact` (xem mockup trực quan dạng web) so với `agent-cta`.
+
 ## Cách gọi agent
 
 ```
 Nhờ tôi: "giao bài [link hoặc dàn ý] cho Agent CTA"
 ```
 
-Tôi sẽ gọi Agent tool với `subagent_type: "agent-cta"`, chạy nền để có thể làm việc khác song song trong lúc chờ.
+Tôi sẽ gọi Agent tool với `subagent_type: "agent-cta"` (hoặc `"agent-cta-design"`), chạy nền để có thể làm việc khác song song trong lúc chờ.
 
 ### ⚠️ Lưu ý đã phát hiện trong buổi này
 
 Sub agent định nghĩa ở project-level (`.claude/agents/`) chỉ được registry của Claude Code nhận diện khi **phiên làm việc mở với working directory nằm trong chính repo** (`D:\Claude code\thaongan-toi-uu-cta`), không phải thư mục cha (`D:\Claude code`).
 
-- Nếu mở phiên từ `D:\Claude code` → gọi `subagent_type: "agent-cta"` sẽ báo lỗi *"Agent type not found"* → phải chạy tay (không chạy nền được).
+- Nếu mở phiên từ `D:\Claude code` → gọi `subagent_type: "agent-cta"` hoặc `"agent-cta-design"` sẽ báo lỗi *"Agent type not found"* → phải chạy tay (không chạy nền được).
 - Muốn chạy nền thật sự: mở terminal mới, `cd` vào `D:\Claude code\thaongan-toi-uu-cta`, khởi động Claude Code từ đó, rồi giao bài.
+
+**Cách lách tạm thời đã dùng trong buổi này** khi cần chạy đa agent song song mà đang ở sai thư mục: gọi `subagent_type: "general-purpose"` nhưng yêu cầu agent đó **đọc file định nghĩa tương ứng** (`agent-cta.md` hoặc `agent-cta-design.md`) bằng Read tool trước, rồi thực thi đúng như agent đó — vẫn là 2 tiến trình con tách biệt xử lý đúng chuyên môn, chỉ khác là không gắn được nhãn tên tùy chỉnh.
 
 ## Đã test
 
-Test với dàn ý "AI scribes for doctors: how they work, benefits, and features" (persona Healthcare, giai đoạn Interest) — agent chạy đúng quy trình 5 bước, đề xuất 3 CTA ở 3 vị trí khác nhau trong bài, có self-check theo checklist. Xem lại kết quả trong lịch sử hội thoại buổi này.
+1. Test riêng `agent-cta` với dàn ý "AI scribes for doctors: how they work, benefits, and features" (persona Healthcare, giai đoạn Interest) — agent chạy đúng quy trình 5 bước, đề xuất 3 CTA ở 3 vị trí khác nhau trong bài, có self-check theo checklist.
+2. Test phối hợp cả 2 agent trên cùng bài viết đầy đủ (lấy nội dung từ Google Doc) — `agent-cta` viết câu chữ, `agent-cta-design` đề xuất hình thức + dựng mockup, sau đó tổng hợp thành 1 báo cáo hoàn chỉnh. Kết quả: [`outputs/ai-scribes-cta-report.md`](../../outputs/ai-scribes-cta-report.md).
